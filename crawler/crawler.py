@@ -1,0 +1,109 @@
+import requests
+from fake_useragent import UserAgent
+from bs4 import BeautifulSoup
+import re
+import pandas as pd
+from tqdm import tqdm
+from datetime import datetime
+import os
+
+# Here we use ShenlongProxy for proxy settings, define the proxy settings
+def fetch_url_content(url, headers):
+    proxyHost = "----------"
+    proxyPort = 12345
+    account = "----------"
+    password = "----------"
+    proxyMeta = f"---------:{account}:{password}@{proxyHost}:{proxyPort}"
+    proxies = {
+        "http": proxyMeta,
+        "https": proxyMeta
+    }
+    
+    while True:
+        try:
+            response = requests.get(url, headers=headers, proxies=proxies, verify=True)
+            response.encoding = response.apparent_encoding
+            html = response.text
+            return html
+        except requests.exceptions.RequestException as e:
+            print(f"Error fetching URL: {e}")
+
+def extract_post_publish_times(html_content):
+    pattern = r'"post_last_time":"(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})"'
+    matches = re.findall(pattern, html_content)
+    return matches
+
+headers = {"User-Agent": UserAgent().random} # set headers with a random user-agent
+os.makedirs("CSI300_comments", exist_ok=True) # make a folder for saving the files
+
+# ----- Define the crawling parameters -----
+start_page = 0
+end_page = 0
+count = 0
+target_list = ['stock_code_1', 'stock_code_2', '......'] # List of targets to crawl, can be modified as needed
+date_threshold = datetime.strptime("2015-05-05 00:00:00", "%Y-%m-%d %H:%M:%S") # Define the date threshold for filtering posts
+target_length = len(target_list)
+
+user_comments = []
+publish_times = []
+
+for number in tqdm(range(target_length), desc="Crawling targets"):
+    user_comments = []
+    publish_times = []
+    target = target_list[number]
+    terminate = False
+    for page in range(start_page, end_page+1):
+        if terminate:
+            break
+        print(f"Target {target} crawling page {page}")
+
+        url = f"https://guba.eastmoney.com/list,{target}_{page}.html"
+        html = fetch_url_content(url, headers)
+
+        cur_post_publish_times = extract_post_publish_times(html)
+        filtered_post_publish_times = [time for time in cur_post_publish_times if datetime.strptime(time, "%Y-%m-%d %H:%M:%S") > date_threshold]
+        if not filtered_post_publish_times:
+            terminate = True
+            print(f"Target {target} has reached the time threshold")
+            break
+        publish_times.extend(cur_post_publish_times)
+        soup = BeautifulSoup(html, "html.parser")
+
+        comments = soup.find_all("a")
+        if len(comments) == 50:
+            terminate = True
+            print(f"Target {target} has reached the end of the page")
+            break
+
+        for comment in comments:
+            href = comment.get('href')
+            data_posttype = comment.get('data-posttype')
+            text = comment.text.strip()
+
+            if href and href != 'javascript:;':
+                if href.startswith("//"):
+                    href = "https:" + href
+                elif href.startswith("/"):
+                    href = "https://guba.eastmoney.com" + href
+                
+                if data_posttype:
+                    user_comments.append([text, href, data_posttype])
+                    print(text)
+                    
+                else:
+                    if href and href.startswith("https://i.eastmoney.com"):
+                        user_comments[-1].append(text)
+                        user_comments[-1].append(href)
+
+            count += 1
+
+            # Rotate user-agent every 35 requests to avoid being blocked
+            if count == 35:
+                headers = {"User-Agent": UserAgent().random}
+                count = 0
+
+    result = [(comment[0], comment[1], comment[2], comment[3], comment[4], publish_times[i]) for i, comment in enumerate(user_comments)]
+
+    df = pd.DataFrame(result, columns=['Comment', 'Comment_URL', 'PostType', 'PublishTime', 'Author', 'Author_URL'])
+    filename = f"{target}.xlsx"
+    df.to_excel(f"your_target_path/{filename}", index=False)
