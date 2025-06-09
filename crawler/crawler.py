@@ -41,7 +41,7 @@ start_page = 0
 end_page = 0
 count = 0
 target_list = ['stock_code_1', 'stock_code_2', '......'] # List of targets to crawl, can be modified as needed
-date_threshold = datetime.strptime("2015-05-05 00:00:00", "%Y-%m-%d %H:%M:%S") # Define the date threshold for filtering posts
+date_threshold = datetime.strptime("0000-00-00 00:00:00", "%Y-%m-%d %H:%M:%S") # Define the date threshold for filtering posts
 target_length = len(target_list)
 
 user_comments = []
