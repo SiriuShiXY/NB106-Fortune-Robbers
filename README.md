@@ -54,7 +54,11 @@ If desired, you can modify or extend the heuristic operators and fitness metrics
 ## Time Series Model Training
 
 This section bundles a complete, end-to-end workflow for **cross-sectional
-time-series prediction** on daily stock factors:
+time-series prediction** on daily stock factors. Before running the following command lines, please run: 
+
+```bash
+cd time_series_model
+```
 
 ### Quick Start — Train All Stocks (LSTM)
 
