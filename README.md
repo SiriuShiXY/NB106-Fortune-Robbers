@@ -50,3 +50,46 @@ python SGP/merge_augmented_factors.py
 ```
 
 If desired, you can modify or extend the heuristic operators and fitness metrics by editing the ``utils.py`` file in the same folder.
+
+## Time Series Model Training
+
+This section bundles a complete, end-to-end workflow for **cross-sectional
+time-series prediction** on daily stock factors:
+
+### Quick Start — Train All Stocks (LSTM)
+
+```bash
+# train, validate, and checkpoint every stock file in 5 folds
+python cli_train.py
+```
+
+Hyper-parameters such as batch size, epochs, learning rate, hidden units, and
+random seeds are centralised in ``config.py``.  Edit once, apply everywhere. Tree-based models are also available, we include `rf, gbdt, lgbm` in the scripts.
+
+### Generate Daily Top-K Predictions 
+
+```bash
+python cli_predict.py \
+  --csv   Cleaned\ Data_with_aug/000001.SZ_ors.csv \
+  --model models/lstm_fold1.pth \
+  --fold  1
+# ➜ writes topks/top_k_stocks_per_day_fold1.csv
+```
+
+###  Back-test the Top-K Strategy
+
+This back-test script prints key performance metrics and plots the capital curve
+versus CSI-300: 
+
+```bash
+from backtest import run_backtest
+
+run_backtest(
+    topk_csv   = "topks/top_k_stocks_per_day_fold1.csv",
+    data_dir   = "Cleaned Data",
+    index_path = "CSI300.xlsx",
+    initial    = 1_000_000          # starting capital
+)
+```
+
+
