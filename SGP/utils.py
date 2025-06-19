@@ -386,7 +386,7 @@ def ts_kurt(*xs):
 
 
 __all__ = [
-    # 基础
+    # base
     "protected_division", "protected_sqrt", "protected_log", "safe_exp",
     # Heuristic ops
     "rank", "decay_linear", "winsorize", "sigmoid",
