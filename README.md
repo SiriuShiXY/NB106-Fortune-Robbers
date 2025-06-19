@@ -35,7 +35,7 @@ python sentiment_classification/model_inference.py
 
 ## SGP Factor Generation
 
-We implement a Symbolic Genetic Programming (SGP) pipeline to automatically evolve interpretable alpha factors based on historical lagged features. The system uses DEAP for genetic programming and evaluates individuals via a cross-sectional fitness score that combines **TopR**, **Monotonicity**, and **Rank IC**. All related scripts are located in the `SGP` folder.
+We implement a Symbolic Genetic Programming (SGP) pipeline to automatically evolve interpretable alpha factors based on historical lagged features. The system uses [DEAP](https://github.com/DEAP/deap) for genetic programming and evaluates individuals via a cross-sectional fitness score that combines **TopR**, **Monotonicity**, and **Rank IC**. All related scripts are located in the `SGP` folder.
 
 To train the genetic programming model and generate the **Top-30** symbolic expressions as alpha factors, run:
 
